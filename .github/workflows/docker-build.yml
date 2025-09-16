@@ -24,10 +24,10 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t ghcr.io/${{ github.repository_owner }}/flask-webserver:latest .
-          docker tag ghcr.io/${{ github.repository_owner }}/flask-webserver:latest ghcr.io/${{ github.repository_owner }}/flask-webserver:${{ github.sha }}
+          docker build -t ghcr.io/${{ github.repository_owner }}/docker-flask-server1:latest .
+          docker tag ghcr.io/${{ github.repository_owner }}/docker-flask-server1:latest ghcr.io/${{ github.repository_owner }}/docker-flask-server1:${{ github.sha }}
 
       - name: Push Docker image
         run: |
-          docker push ghcr.io/${{ github.repository_owner }}/flask-webserver:latest
-          docker push ghcr.io/${{ github.repository_owner }}/flask-webserver:${{ github.sha }}
+          docker push ghcr.io/${{ github.repository_owner }}/docker-flask-server1:latest
+          docker push ghcr.io/${{ github.repository_owner }}/docker-flask-server1:${{ github.sha }}
