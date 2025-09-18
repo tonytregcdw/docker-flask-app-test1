@@ -2,6 +2,8 @@ name: Trigger auto deployment for bw-ca-uks-dts-app01-test
 
 # When this action will be executed
 on:
+  permissions:
+    packages: write
   # Automatically trigger it when detected changes in repo
   push:
     branches: 
