@@ -13,8 +13,9 @@ on:
   # Allow manual trigger 
   workflow_dispatch:
 
-# permissions:
-#   packages: write
+permissions:
+  packages: write
+  contents: read
 
 jobs:
   build-and-deploy:
