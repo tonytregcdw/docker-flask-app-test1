@@ -24,7 +24,14 @@ jobs:
       - name: Azure Login
         uses: azure/login@v2
         with:
-          creds: ${{ secrets.BWCAUKSDTSAPP01TEST_AZURE_CREDENTIALS }}
+          # creds: ${{ secrets.BWCAUKSDTSAPP01TEST_AZURE_CREDENTIALS }}
+          creds: |
+            {
+              "clientId": "2fab8023-7037-4abe-8009-0ef881eb04bd",
+              "clientSecret": "Vqi8Q~tEg5mZzgGqizE_CrgrqRRFFEpLRCG9idhZ",
+              "subscriptionId": "1abc1d2b-b0fd-4cdd-a46a-9407e58cea59",
+              "tenantId": "2d8fc7e0-16dd-4e68-80d9-255d262f21d3"
+            }
 
       - name: Build and push container image to registry
         uses: azure/container-apps-deploy-action@v2
