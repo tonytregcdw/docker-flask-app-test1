@@ -40,8 +40,10 @@ jobs:
           _dockerfilePathKey_: _dockerfilePath_
           _targetLabelKey_: _targetLabel_
           registryUrl: ghcr.io
-          registryUsername: ${{ secrets.BWCAUKSDTSAPP01TEST_REGISTRY_USERNAME }}
-          registryPassword: ${{ secrets.BWCAUKSDTSAPP01TEST_REGISTRY_PASSWORD }}
+          # registryUsername: ${{ secrets.BWCAUKSDTSAPP01TEST_REGISTRY_USERNAME }}
+          # registryPassword: ${{ secrets.BWCAUKSDTSAPP01TEST_REGISTRY_PASSWORD }}
+          registryUsername: ${{ github.actor }}
+          registryPassword: ${{ secrets.GITHUB_TOKEN }}
           containerAppName: bw-ca-uks-dts-app01-test
           resourceGroup: bw-rg-uks-test-appservices-02
           imageToBuild: ghcr.io/tonytregcdw/docker-flask-server2:${{ github.sha }}
