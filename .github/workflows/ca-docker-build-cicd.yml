@@ -29,7 +29,7 @@ jobs:
         uses: azure/login@v2
         with:
           # creds: ${{ secrets.BWCAUKSDTSAPP01TEST_AZURE_CREDENTIALS }}
-          creds: ${{ secreets.BW_TEST_SP }}
+          creds: ${{ secrets.BW_TEST_SP }}
           # creds: |
           #   {
           #     "clientId": "2fab8023-7037-4abe-8009-0ef881eb04bd",
