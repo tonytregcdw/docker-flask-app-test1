@@ -1,0 +1,37 @@
+<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+<div class="container">
+  <h1 class="heading">People</h1>
+  {% if error_message %}
+    <div class="alert">{{ error_message }}</div>
+  {% endif %}
+  <form method="post" action="/add" class="form">
+    <input name="name" placeholder="Name" required class="input">
+    <button type="submit" class="button">Add</button>
+  </form>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th class="th id">ID</th>
+          <th class="th">Name</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if people %}
+          {% for person in people %}
+            <tr>
+              <td class="td id muteds">{{ person['id'] }}</td>
+              <td class="td">{{ person['name'] }}</td>
+            </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td class="td empty" colspan="2">No people to display.</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+

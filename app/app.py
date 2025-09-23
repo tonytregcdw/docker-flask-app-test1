@@ -1,7 +1,8 @@
 import os
 from dotenv import load_dotenv
-from flask import Flask, render_template_string, request, redirect
+from flask import Flask, render_template, render_template_string, request, redirect
 import requests
+from urllib.parse import quote_plus
 
 app = Flask(__name__)
 
@@ -15,29 +16,32 @@ API_URL = os.environ.get('API_URL')
 
 @app.route("/")
 def index():
-    try:
-        resp = requests.get(API_URL)
-        people = resp.json()
-    except Exception as e:
-        people = []
-    return render_template_string("""
-        <h1>People List</h1>
-        <form method="post" action="/add">
-            <input name="name" placeholder="Name" required>
-            <input type="submit" value="Add">
-        </form>
-        <ul>
-            {% for person in people %}
-                <li>{{ person['id'] }}: {{ person['name'] }}</li>
-            {% endfor %}
-        </ul>
-    """, people=people)
+    error_message = request.args.get("error")
+    people = []
+    if not API_URL:
+        error_message = error_message or "API URL is not configured."
+    else:
+        try:
+            resp = requests.get(API_URL, timeout=3)
+            resp.raise_for_status()
+            people = resp.json()
+        except requests.RequestException:
+            error_message = error_message or "API unavailable. Please try again later."
+        except ValueError:
+            error_message = error_message or "Received invalid data from API."
+    return render_template("index.html", people=people, error_message=error_message)
 
 @app.route("/add", methods=["POST"])
 def add_person():
     name = request.form["name"]
     # Send JSON, not params
-    requests.post(API_URL, json={"name": name})
+    try:
+        if not API_URL:
+            raise RuntimeError("API URL is not configured.")
+        requests.post(API_URL, json={"name": name}, timeout=3)
+    except Exception as e:
+        message = quote_plus(str(e) if str(e) else "Failed to add person. API unavailable.")
+        return redirect(f"/?error={message}")
     return redirect("/")
 
 if __name__ == "__main__":
