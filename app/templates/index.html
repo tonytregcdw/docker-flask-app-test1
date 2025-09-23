@@ -1,7 +1,11 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 
 <div class="container">
-  <h1 class="heading">People</h1>
+  <h1 class="heading">People
+    {% if secret_active %}
+      <span class="secret-indicator" title="Debug mode active">🔧</span>
+    {% endif %}
+  </h1>
   {% if error_message %}
     <div class="alert">{{ error_message }}</div>
   {% endif %}

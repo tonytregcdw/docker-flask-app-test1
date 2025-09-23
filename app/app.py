@@ -8,8 +8,7 @@ app = Flask(__name__)
 
 load_dotenv()
 
-SECRET_KEY = os.environ.get('SECRET_KEY')
-TEST_ENV_VAR1 = os.environ.get('TEST_ENV_VAR1')
+SECRET_VALUE = os.environ.get('SECRET_VALUE')
 
 # Should point to the FastAPI server, e.g., "http://api:8000/people/"
 API_URL = os.environ.get('API_URL')
@@ -29,7 +28,10 @@ def index():
             error_message = error_message or "API unavailable. Please try again later."
         except ValueError:
             error_message = error_message or "Received invalid data from API."
-    return render_template("index.html", people=people, error_message=error_message)
+    
+    # Check if secret value is present for special functionality
+    secret_active = SECRET_VALUE is not None
+    return render_template("index.html", people=people, error_message=error_message, secret_active=secret_active)
 
 @app.route("/add", methods=["POST"])
 def add_person():
@@ -43,6 +45,24 @@ def add_person():
         message = quote_plus(str(e) if str(e) else "Failed to add person. API unavailable.")
         return redirect(f"/?error={message}")
     return redirect("/")
+
+@app.route("/debug")
+def debug_info():
+    # This endpoint only works when SECRET_VALUE is present
+    if not SECRET_VALUE:
+        return "Debug endpoint not available - SECRET_VALUE not configured", 404
+    
+    debug_info = {
+        "secret_configured": True,
+        "secret_length": len(SECRET_VALUE),
+        "api_configured": API_URL is not None,
+        "api_url": API_URL,
+        "test_env_var": TEST_ENV_VAR1
+    }
+    
+    # Return as JSON for easy debugging
+    from flask import jsonify
+    return jsonify(debug_info)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=80)
