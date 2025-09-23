@@ -37,48 +37,60 @@ jobs:
           #     "tenantId": "blah"
           #   }
 
-      - name: Build and push container image to registry - frontend
-        uses: azure/container-apps-deploy-action@v2
-        with:
-          appSourcePath: ${{ github.workspace }}/app
-          dockerfilePath: ${{ github.workspace }}/app/Dockerfile
-          _targetLabelKey_: _targetLabel_
-          registryUrl: ghcr.io
-          # registryUsername: ${{ secrets.BWCAUKSDTSAPP01TEST_REGISTRY_USERNAME }}
-          # registryPassword: ${{ secrets.BWCAUKSDTSAPP01TEST_REGISTRY_PASSWORD }}
-          registryUsername: ${{ github.actor }}
-          registryPassword: ${{ secrets.GITHUB_TOKEN }}
-          containerAppName: tt-ca-uks-demo-app01-test
-          resourceGroup: tt-rg-uks-test-appservices-02
-          imageToBuild: ghcr.io/tonytregcdw/docker-python-fe-01:${{ github.sha }}
-          
-      - name: Build and push container image to registry - api
-        uses: azure/container-apps-deploy-action@v2
-        with:
-          appSourcePath: ${{ github.workspace }}/api
-          dockerfilePath: ${{ github.workspace }}/api/Dockerfile
-          _targetLabelKey_: _targetLabel_
-          registryUrl: ghcr.io
-          # registryUsername: ${{ secrets.BWCAUKSDTSAPP01TEST_REGISTRY_USERNAME }}
-          # registryPassword: ${{ secrets.BWCAUKSDTSAPP01TEST_REGISTRY_PASSWORD }}
-          registryUsername: ${{ github.actor }}
-          registryPassword: ${{ secrets.GITHUB_TOKEN }}
-          containerAppName: tt-ca-uks-demo-app02-test
-          resourceGroup: tt-rg-uks-test-appservices-02
-          imageToBuild: ghcr.io/tonytregcdw/docker-python-api-01:${{ github.sha }}
-         
-      - name: Build and push container image to registry - postgres
+      - name: Build and push container image to registry - web
         run: |
-          docker build -t ghcr.io/tonytregcdw/docker-postgres-people:${{ github.sha }} ./db
+          docker build -t ghcr.io/tonytregcdw/docker-ca-lab-web:${{ github.sha }} ./app
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker push ghcr.io/tonytregcdw/docker-postgres-people:${{ github.sha }}
+          docker push ghcr.io/tonytregcdw/docker-ca-lab-web:${{ github.sha }}
 
-      - name: Deploy Postgres container to Azure Container App
-        uses: azure/container-apps-deploy-action@v2
-        with:
-          registryUrl: ghcr.io
-          registryUsername: ${{ github.actor }}
-          registryPassword: ${{ secrets.GITHUB_TOKEN }}
-          containerAppName: tt-ca-uks-demo-app03-test   # adjust as needed
-          resourceGroup: tt-rg-uks-test-appservices-02
-          imageToDeploy: ghcr.io/tonytregcdw/docker-postgres-people:${{ github.sha }}
+      # - name: Deploy container image to container app - web
+      #   uses: azure/container-apps-deploy-action@v2
+      #   with:
+      #     # appSourcePath: ${{ github.workspace }}/app
+      #     # dockerfilePath: ${{ github.workspace }}/app/Dockerfile
+      #     # _targetLabelKey_: _targetLabel_
+      #     registryUrl: ghcr.io
+      #     # registryUsername: ${{ secrets.BWCAUKSDTSAPP01TEST_REGISTRY_USERNAME }}
+      #     # registryPassword: ${{ secrets.BWCAUKSDTSAPP01TEST_REGISTRY_PASSWORD }}
+      #     registryUsername: ${{ github.actor }}
+      #     registryPassword: ${{ secrets.GITHUB_TOKEN }}
+      #     containerAppName: tt-ca-uks-demo-app01-test
+      #     resourceGroup: tt-rg-uks-test-appservices-02
+      #     imageToDeploy: ghcr.io/tonytregcdw/docker-python-fe-01:${{ github.sha }}
+
+      - name: Build and push container image to registry - api
+        run: |
+          docker build -t ghcr.io/tonytregcdw/docker-ca-lab-api:${{ github.sha }} ./api
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker push ghcr.io/tonytregcdw/docker-ca-lab-api:${{ github.sha }}
+
+      # - name: Deploy container image to container app - api
+      #   uses: azure/container-apps-deploy-action@v2
+      #   with:
+      #     # appSourcePath: ${{ github.workspace }}/api
+      #     # dockerfilePath: ${{ github.workspace }}/api/Dockerfile
+      #     # _targetLabelKey_: _targetLabel_
+      #     registryUrl: ghcr.io
+      #     # registryUsername: ${{ secrets.BWCAUKSDTSAPP01TEST_REGISTRY_USERNAME }}
+      #     # registryPassword: ${{ secrets.BWCAUKSDTSAPP01TEST_REGISTRY_PASSWORD }}
+      #     registryUsername: ${{ github.actor }}
+      #     registryPassword: ${{ secrets.GITHUB_TOKEN }}
+      #     containerAppName: tt-ca-uks-demo-app02-test
+      #     resourceGroup: tt-rg-uks-test-appservices-02
+      #     imageToDeploy: ghcr.io/tonytregcdw/docker-python-api-01:${{ github.sha }}
+         
+      # - name: Build and push container image to registry - postgres
+      #   run: |
+      #     docker build -t ghcr.io/tonytregcdw/docker-postgres-people:${{ github.sha }} ./db
+      #     echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      #     docker push ghcr.io/tonytregcdw/docker-postgres-people:${{ github.sha }}
+
+      # - name: Deploy Postgres container to Azure Container App
+      #   uses: azure/container-apps-deploy-action@v2
+      #   with:
+      #     registryUrl: ghcr.io
+      #     registryUsername: ${{ github.actor }}
+      #     registryPassword: ${{ secrets.GITHUB_TOKEN }}
+      #     containerAppName: tt-ca-uks-demo-app03-test   # adjust as needed
+      #     resourceGroup: tt-rg-uks-test-appservices-02
+      #     imageToDeploy: ghcr.io/tonytregcdw/docker-postgres-people:${{ github.sha }}
