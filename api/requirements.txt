@@ -1,5 +1,4 @@
-python-dotenv
 fastapi
-sqlalchemy
-uvicorn 
-psycopg2-binary
+pydantic
+motor
+python-dotenv
