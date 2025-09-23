@@ -57,7 +57,7 @@ def debug_info():
         "secret_length": len(SECRET_VALUE),
         "api_configured": API_URL is not None,
         "api_url": API_URL,
-        "test_env_var": TEST_ENV_VAR1
+        "secret_value_preview": SECRET_VALUE[:3] + "..." if len(SECRET_VALUE) > 3 else "***"
     }
     
     # Return as JSON for easy debugging
