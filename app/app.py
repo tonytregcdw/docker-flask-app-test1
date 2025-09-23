@@ -5,15 +5,13 @@ import requests
 
 app = Flask(__name__)
 
-
-load_dotenv()  # This will read variables from .env
+load_dotenv()
 
 SECRET_KEY = os.environ.get('SECRET_KEY')
 TEST_ENV_VAR1 = os.environ.get('TEST_ENV_VAR1')
 
-# Adjust this to match the host/port of your API service inside your deployment
+# Should point to the FastAPI server, e.g., "http://api:8000/people/"
 API_URL = os.environ.get('API_URL')
-# API_URL = "http://api:8000/people/"
 
 @app.route("/")
 def index():
@@ -38,7 +36,8 @@ def index():
 @app.route("/add", methods=["POST"])
 def add_person():
     name = request.form["name"]
-    requests.post(API_URL, params={"name": name})
+    # Send JSON, not params
+    requests.post(API_URL, json={"name": name})
     return redirect("/")
 
 if __name__ == "__main__":
