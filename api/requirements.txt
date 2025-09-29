@@ -3,3 +3,5 @@ pydantic
 motor
 python-dotenv
 uvicorn
+redis
+itsdangerous

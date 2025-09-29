@@ -6,13 +6,25 @@
       <span class="secret-indicator" title="Debug mode active">🔧</span>
     {% endif %}
   </h1>
+  <div class="auth">
+    {% if username %}
+      <span class="muteds">Logged in as {{ username }}</span>
+      <a href="{{ url_for('logout') }}" class="button link">Logout</a>
+    {% else %}
+      <a href="{{ url_for('login') }}" class="button">Login</a>
+    {% endif %}
+  </div>
   {% if error_message %}
     <div class="alert">{{ error_message }}</div>
   {% endif %}
-  <form method="post" action="/add" class="form">
-    <input name="name" placeholder="Name" required class="input">
-    <button type="submit" class="button">Add</button>
-  </form>
+  {% if username %}
+    <form method="post" action="/add" class="form">
+      <input name="name" placeholder="Name" required class="input">
+      <button type="submit" class="button">Add</button>
+    </form>
+  {% else %}
+    <p class="muteds">Log in to add people and view data.</p>
+  {% endif %}
   <div class="table-wrap">
     <table class="table">
       <thead>
@@ -22,16 +34,20 @@
         </tr>
       </thead>
       <tbody>
-        {% if people %}
+        {% if username and people %}
           {% for person in people %}
             <tr>
               <td class="td id muteds">{{ person['id'] }}</td>
               <td class="td">{{ person['name'] }}</td>
             </tr>
           {% endfor %}
-        {% else %}
+        {% elif username %}
           <tr>
             <td class="td empty" colspan="2">No people to display.</td>
+          </tr>
+        {% else %}
+          <tr>
+            <td class="td empty" colspan="2">Please log in to view people.</td>
           </tr>
         {% endif %}
       </tbody>
