@@ -10,11 +10,16 @@ app = Flask(__name__)
 
 app.secret_key = "CHANGE_ME"  # Use a secure key
 
+# Load environment variables early for Redis config
+load_dotenv()
+REDIS_HOST = os.environ.get('REDIS_HOST', 'redis')
+REDIS_PORT = int(os.environ.get('REDIS_PORT', '6379'))
+
 # Prefer Redis-backed sessions; gracefully fall back if Redis unavailable
 app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_USE_SIGNER'] = True
 try:
-    redis_client = redis.Redis(host='redis', port=6379, socket_connect_timeout=1, socket_timeout=1)
+    redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, socket_connect_timeout=1, socket_timeout=1)
     redis_client.ping()
     app.config['SESSION_TYPE'] = 'redis'
     app.config['SESSION_REDIS'] = redis_client
@@ -25,7 +30,6 @@ except Exception:
 Session(app)  # Initialize server-side session
 
 
-load_dotenv()
 
 SECRET_VALUE = os.environ.get('SECRET_VALUE')
 
