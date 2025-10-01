@@ -57,9 +57,9 @@ jobs:
 
       - name: Build and push container image to registry - api
         run: |
-          docker build -t ghcr.io/tonytregcdw/docker-ca-lab-api:1.0.2 -t ghcr.io/tonytregcdw/docker-ca-lab-api:latest ./api
+          docker build -t ghcr.io/tonytregcdw/docker-ca-lab-api:1.0.3 -t ghcr.io/tonytregcdw/docker-ca-lab-api:latest ./api
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker push ghcr.io/tonytregcdw/docker-ca-lab-api:1.0.2
+          docker push ghcr.io/tonytregcdw/docker-ca-lab-api:1.0.3
           docker push ghcr.io/tonytregcdw/docker-ca-lab-api:latest
 
       - name: Deploy container image to container app - api- test
@@ -71,4 +71,4 @@ jobs:
           containerAppEnvironment: calab-cae-uks-lab01-test-01
           containerAppName: calab-ca-uks-lab01-api-test
           resourceGroup: calab-rg-uks-test-appservices-01
-          imageToDeploy: ghcr.io/tonytregcdw/docker-ca-lab-api:latest
+          imageToDeploy: ghcr.io/tonytregcdw/docker-ca-lab-api:1.0.3
