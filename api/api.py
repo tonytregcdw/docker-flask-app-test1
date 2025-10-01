@@ -40,8 +40,8 @@ def get_username_from_request(request: Request) -> Optional[str]:
     header_user = request.headers.get('X-User')
     if header_user:
         return header_user
-    # 2) Try to extract from Flask session cookie if available
-    cookie_val = request.cookies.get('session')
+    # 2) Try explicit forwarded session header from frontend
+    cookie_val = request.headers.get('X-Session') or request.cookies.get('session')
     if not cookie_val or not signer or not redis_client:
         return None
     try:

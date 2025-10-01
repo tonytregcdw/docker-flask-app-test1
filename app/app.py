@@ -54,6 +54,10 @@ def index():
     else:
         try:
             headers = {"X-User": username}
+            # Forward the signed Flask session cookie so API can resolve user from Redis
+            sess_cookie = request.cookies.get('session')
+            if sess_cookie:
+                headers["X-Session"] = sess_cookie
             resp = requests.get(API_URL, timeout=3, headers=headers)
             resp.raise_for_status()
             people = resp.json()
@@ -108,6 +112,10 @@ def add_person():
         headers = {}
         if session.get('username'):
             headers["X-User"] = session['username']
+        # Forward the signed Flask session cookie so API can resolve user from Redis
+        sess_cookie = request.cookies.get('session')
+        if sess_cookie:
+            headers["X-Session"] = sess_cookie
         requests.post(API_URL, json={"name": name}, timeout=3, headers=headers)
     except Exception as e:
         message = quote_plus(str(e) if str(e) else "Failed to add person. API unavailable.")
