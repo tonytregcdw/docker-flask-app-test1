@@ -53,7 +53,7 @@ def index():
         error_message = error_message or "API URL is not configured."
     else:
         try:
-            headers = {"X-User": username}
+            headers = {}
             # Forward the signed Flask session cookie so API can resolve user from Redis
             sess_cookie = request.cookies.get('session')
             if sess_cookie:
@@ -110,8 +110,6 @@ def add_person():
         if not API_URL:
             raise RuntimeError("API URL is not configured.")
         headers = {}
-        if session.get('username'):
-            headers["X-User"] = session['username']
         # Forward the signed Flask session cookie so API can resolve user from Redis
         sess_cookie = request.cookies.get('session')
         if sess_cookie:

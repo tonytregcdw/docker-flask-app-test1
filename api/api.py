@@ -31,16 +31,13 @@ except Exception:
 signer = None
 if FLASK_SECRET:
     try:
-        signer = Signer(FLASK_SECRET, salt='flask-session')
+        # Flask default cookie session salt is 'cookie-session'
+        signer = Signer(FLASK_SECRET, salt='cookie-session')
     except Exception:
         signer = None
 
 def get_username_from_request(request: Request) -> Optional[str]:
-    # 1) Prefer explicit header from trusted frontend
-    header_user = request.headers.get('X-User')
-    if header_user:
-        return header_user
-    # 2) Try explicit forwarded session header from frontend
+    # Resolve solely from forwarded signed session cookie
     cookie_val = request.headers.get('X-Session') or request.cookies.get('session')
     if not cookie_val or not signer or not redis_client:
         return None
@@ -89,3 +86,5 @@ async def add_person(person: PersonModel, request: Request):
         "name": person.name,
         "username": user
     }
+
+    
