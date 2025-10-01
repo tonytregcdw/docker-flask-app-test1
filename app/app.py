@@ -15,7 +15,7 @@ load_dotenv()
 REDIS_HOST = os.environ.get('REDIS_HOST', 'redis')
 REDIS_PORT = int(os.environ.get('REDIS_PORT', '6379'))
 
-# Prefer Redis-backed sessions; gracefully fall back if Redis unavailable
+# Require Redis-backed sessions; fail if Redis unavailable
 app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_USE_SIGNER'] = True
 try:
@@ -23,11 +23,11 @@ try:
     redis_client.ping()
     app.config['SESSION_TYPE'] = 'redis'
     app.config['SESSION_REDIS'] = redis_client
-except Exception:
-    app.config['SESSION_TYPE'] = 'filesystem'
-    app.config['SESSION_FILE_DIR'] = '/tmp/flask_sessions'
-
-Session(app)  # Initialize server-side session
+    Session(app)  # Initialize server-side session
+except Exception as e:
+    print(f"FATAL ERROR: Redis connection failed - {e}")
+    print("Application cannot start without Redis. Please ensure Redis is running and accessible.")
+    raise SystemExit(1)
 
 
 
