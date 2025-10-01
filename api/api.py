@@ -71,7 +71,7 @@ async def read_people(request: Request):
     async for person in people_cursor:
         people.append({
             "id": str(person.get("_id")),
-            "name": person.get("name", "")
+            "name": person.get("name", ""),
             "username": person.get("username", "")
         })
     return people
@@ -81,9 +81,11 @@ async def add_person(person: PersonModel, request: Request):
     user = get_username_from_request(request)
     if not user:
         raise HTTPException(status_code=401, detail="Unauthorized: user not identified")
-    result = await db.people.insert_one(person.dict())
+    # Augment the document with the active session user
+    doc = {**person.dict(), "username": user}
+    result = await db.people.insert_one(doc)
     return {
         "id": str(result.inserted_id),
-        "name": person.name
+        "name": person.name,
         "username": user
     }
