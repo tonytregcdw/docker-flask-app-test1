@@ -6,6 +6,7 @@ import os
 import redis
 import pickle
 from itsdangerous import Signer, BadSignature
+from typing import Optional
 
 load_dotenv()
 MONGODB_URL = os.environ.get('MONGODB_URL', "mongodb://localhost:27017")
@@ -34,7 +35,7 @@ if FLASK_SECRET:
     except Exception:
         signer = None
 
-def get_username_from_request(request: Request) -> str | None:
+def get_username_from_request(request: Request) -> Optional[str]:
     # 1) Prefer explicit header from trusted frontend
     header_user = request.headers.get('X-User')
     if header_user:
