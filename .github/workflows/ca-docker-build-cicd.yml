@@ -39,9 +39,9 @@ jobs:
 
       - name: Build and push container image to registry - web
         run: |
-          docker build -t ghcr.io/tonytregcdw/docker-ca-lab-web:1.0.2 -t ghcr.io/tonytregcdw/docker-ca-lab-web:latest ./app
+          docker build -t ghcr.io/tonytregcdw/docker-ca-lab-web:1.0.3 -t ghcr.io/tonytregcdw/docker-ca-lab-web:latest ./app
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker push ghcr.io/tonytregcdw/docker-ca-lab-web:1.0.2
+          docker push ghcr.io/tonytregcdw/docker-ca-lab-web:1.0.3
           docker push ghcr.io/tonytregcdw/docker-ca-lab-web:latest
 
       - name: Deploy container image to container app - web - test
@@ -57,9 +57,9 @@ jobs:
 
       - name: Build and push container image to registry - api
         run: |
-          docker build -t ghcr.io/tonytregcdw/docker-ca-lab-api:1.0.3 -t ghcr.io/tonytregcdw/docker-ca-lab-api:latest ./api
+          docker build -t ghcr.io/tonytregcdw/docker-ca-lab-api:1.0.4 -t ghcr.io/tonytregcdw/docker-ca-lab-api:latest ./api
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker push ghcr.io/tonytregcdw/docker-ca-lab-api:1.0.3
+          docker push ghcr.io/tonytregcdw/docker-ca-lab-api:1.0.4
           docker push ghcr.io/tonytregcdw/docker-ca-lab-api:latest
 
       - name: Deploy container image to container app - api- test
