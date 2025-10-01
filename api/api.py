@@ -72,6 +72,7 @@ async def read_people(request: Request):
         people.append({
             "id": str(person.get("_id")),
             "name": person.get("name", "")
+            "username": person.get("username", "")
         })
     return people
 
@@ -84,4 +85,5 @@ async def add_person(person: PersonModel, request: Request):
     return {
         "id": str(result.inserted_id),
         "name": person.name
+        "username": user
     }
