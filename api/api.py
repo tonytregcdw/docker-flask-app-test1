@@ -22,14 +22,36 @@ app = FastAPI()
 
 # Optional Redis client to read Flask session data
 redis_client = None
-print(f"API Redis config: REDIS_HOST={REDIS_HOST}, REDIS_PORT={REDIS_PORT}")
-try:
-    redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, socket_connect_timeout=1, socket_timeout=1)
-    redis_client.ping()
-    print("API: Redis connection successful")
-except Exception as e:
-    print(f"API: Redis connection failed - {e}")
-    redis_client = None
+
+@app.on_event("startup")
+async def startup_event():
+    print("=" * 50)
+    print("API STARTUP: Redis Connection Debug")
+    print("=" * 50)
+    print(f"API Redis config: REDIS_HOST={REDIS_HOST}, REDIS_PORT={REDIS_PORT}")
+    print(f"API Environment: FLASK_SECRET={'SET' if FLASK_SECRET else 'NOT SET'}")
+    print(f"API Environment: MONGODB_URL={MONGODB_URL}")
+    print(f"API Environment: DB_NAME={DB_NAME}")
+    
+    global redis_client
+    try:
+        redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, socket_connect_timeout=1, socket_timeout=1)
+        redis_client.ping()
+        print("✅ API: Redis connection successful")
+    except Exception as e:
+        print(f"❌ API: Redis connection failed - {e}")
+        redis_client = None
+    print("=" * 50)
+
+@app.get("/health")
+async def health_check():
+    redis_status = "connected" if redis_client else "disconnected"
+    return {
+        "status": "healthy",
+        "redis": redis_status,
+        "mongodb": "connected",
+        "flask_secret": "SET" if FLASK_SECRET else "NOT SET"
+    }
 
 signer = None
 if FLASK_SECRET:
@@ -79,8 +101,11 @@ class PersonModel(BaseModel):
 
 @app.get("/people/")
 async def read_people(request: Request):
+    print(f"🔍 GET /people/ - Headers: {dict(request.headers)}")
     user, error = get_username_from_request(request)
+    print(f"🔍 GET /people/ - User: {user}, Error: {error}")
     if error:
+        print(f"❌ GET /people/ - Returning 503: {error}")
         raise HTTPException(status_code=503, detail=f"Service unavailable: {error}")
     
     people_cursor = db.people.find({})
@@ -91,17 +116,22 @@ async def read_people(request: Request):
             "name": person.get("name", ""),
             "username": person.get("username", "")
         })
+    print(f"✅ GET /people/ - Returning {len(people)} people")
     return people
 
 @app.post("/people/")
 async def add_person(person: PersonModel, request: Request):
+    print(f"🔍 POST /people/ - Headers: {dict(request.headers)}")
     user, error = get_username_from_request(request)
+    print(f"🔍 POST /people/ - User: {user}, Error: {error}")
     if error:
+        print(f"❌ POST /people/ - Returning 503: {error}")
         raise HTTPException(status_code=503, detail=f"Service unavailable: {error}")
     
     # Augment the document with the active session user
     doc = {**person.dict(), "username": user}
     result = await db.people.insert_one(doc)
+    print(f"✅ POST /people/ - Created person for user: {user}")
     return {
         "id": str(result.inserted_id),
         "name": person.name,
