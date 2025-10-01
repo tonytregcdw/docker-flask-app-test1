@@ -22,10 +22,13 @@ app = FastAPI()
 
 # Optional Redis client to read Flask session data
 redis_client = None
+print(f"API Redis config: REDIS_HOST={REDIS_HOST}, REDIS_PORT={REDIS_PORT}")
 try:
     redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, socket_connect_timeout=1, socket_timeout=1)
     redis_client.ping()
-except Exception:
+    print("API: Redis connection successful")
+except Exception as e:
+    print(f"API: Redis connection failed - {e}")
     redis_client = None
 
 signer = None

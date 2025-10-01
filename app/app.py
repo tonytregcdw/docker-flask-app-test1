@@ -15,35 +15,23 @@ load_dotenv()
 REDIS_HOST = os.environ.get('REDIS_HOST', 'redis')
 REDIS_PORT = int(os.environ.get('REDIS_PORT', '6379'))
 
-# Prefer Redis-backed sessions; fall back to filesystem if unavailable
+# Require Redis-backed sessions; fail if Redis unavailable
 app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_USE_SIGNER'] = True
+print(f"Flask Redis config: REDIS_HOST={REDIS_HOST}, REDIS_PORT={REDIS_PORT}")
 redis_client = None
 try:
     redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, socket_connect_timeout=1, socket_timeout=1)
     redis_client.ping()
     app.config['SESSION_TYPE'] = 'redis'
     app.config['SESSION_REDIS'] = redis_client
-    print("Redis connected - using Redis sessions")
+    print("Flask: Redis connected - using Redis sessions")
 except Exception as e:
-    print(f"WARNING: Redis connection failed - {e}")
-    print("Falling back to filesystem sessions")
-    app.config['SESSION_TYPE'] = 'filesystem'
-    app.config['SESSION_FILE_DIR'] = '/tmp/flask_sessions'
+    print(f"FATAL ERROR: Redis connection failed - {e}")
+    print("Application cannot start without Redis. Please ensure Redis is running and accessible.")
+    raise SystemExit(1)
 
 Session(app)  # Initialize server-side session
-
-
-def check_redis_status():
-    """Check if Redis is available and return status info"""
-    try:
-        if redis_client:
-            redis_client.ping()
-            return {"available": True, "error": None}
-        else:
-            return {"available": False, "error": "Redis client not initialized"}
-    except Exception as e:
-        return {"available": False, "error": str(e)}
 
 
 SECRET_VALUE = os.environ.get('SECRET_VALUE')
@@ -61,8 +49,7 @@ def index():
         # Not logged in: show template with login prompt; do not call API
         secret_active = SECRET_VALUE is not None
         error_message = error_message or "Please log in to view data."
-        redis_status = check_redis_status()
-        return render_template("index.html", people=[], error_message=error_message, secret_active=secret_active, username=None, redis_status=redis_status)
+        return render_template("index.html", people=[], error_message=error_message, secret_active=secret_active, username=None)
 
     # Logged in: fetch data from API if configured
     if not API_URL:
@@ -93,8 +80,7 @@ def index():
             error_message = "Received invalid data from API."
 
     secret_active = SECRET_VALUE is not None
-    redis_status = check_redis_status()
-    return render_template("index.html", people=people, error_message=error_message, secret_active=secret_active, username=username, redis_status=redis_status)
+    return render_template("index.html", people=people, error_message=error_message, secret_active=secret_active, username=username)
 
 # (Removed duplicate index route)
 

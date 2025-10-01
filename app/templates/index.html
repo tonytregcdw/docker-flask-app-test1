@@ -5,11 +5,6 @@
     {% if secret_active %}
       <span class="secret-indicator" title="Debug mode active">🔧</span>
     {% endif %}
-    {% if redis_status.available %}
-      <span class="redis-indicator" title="Redis connected">🟢</span>
-    {% else %}
-      <span class="redis-indicator" title="Redis unavailable: {{ redis_status.error }}">🔴</span>
-    {% endif %}
   </h1>
   <div class="auth">
     {% if username %}
