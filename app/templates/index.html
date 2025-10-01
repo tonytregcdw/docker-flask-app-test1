@@ -31,6 +31,7 @@
         <tr>
           <th class="th id">ID</th>
           <th class="th">Name</th>
+          <th class="th">Username</th>
         </tr>
       </thead>
       <tbody>
@@ -39,6 +40,7 @@
             <tr>
               <td class="td id muteds">{{ person['id'] }}</td>
               <td class="td">{{ person['name'] }}</td>
+              <td class="td">{{ person['username'] }}</td>
             </tr>
           {% endfor %}
         {% elif username %}
