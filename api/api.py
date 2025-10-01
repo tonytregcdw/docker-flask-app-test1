@@ -36,25 +36,39 @@ if FLASK_SECRET:
     except Exception:
         signer = None
 
-def get_username_from_request(request: Request) -> Optional[str]:
-    # Resolve solely from forwarded signed session cookie
+def get_username_from_request(request: Request) -> tuple[Optional[str], Optional[str]]:
+    """
+    Resolve username from forwarded signed session cookie.
+    Returns (username, error_message) tuple.
+    """
     cookie_val = request.headers.get('X-Session') or request.cookies.get('session')
-    if not cookie_val or not signer or not redis_client:
-        return None
+    if not cookie_val:
+        return None, "No session cookie provided"
+    
+    if not signer:
+        return None, "Session signing not configured (FLASK_SECRET missing)"
+    
+    if not redis_client:
+        return None, "Redis not available - cannot validate session"
+    
     try:
         unsigned = signer.unsign(cookie_val).decode('utf-8')
     except (BadSignature, Exception):
-        return None
+        return None, "Invalid session cookie signature"
+    
     # Flask-Session Redis key pattern
     redis_key = f"session:{unsigned}"
     try:
         raw = redis_client.get(redis_key)
         if not raw:
-            return None
+            return None, "Session expired or not found"
         data = pickle.loads(raw)
-        return data.get('username')
-    except Exception:
-        return None
+        username = data.get('username')
+        if not username:
+            return None, "No username in session data"
+        return username, None
+    except Exception as e:
+        return None, f"Redis error: {str(e)}"
 
 # Pydantic model for "Person"
 class PersonModel(BaseModel):
@@ -62,7 +76,10 @@ class PersonModel(BaseModel):
 
 @app.get("/people/")
 async def read_people(request: Request):
-    _user = get_username_from_request(request)
+    user, error = get_username_from_request(request)
+    if error:
+        raise HTTPException(status_code=503, detail=f"Service unavailable: {error}")
+    
     people_cursor = db.people.find({})
     people = []
     async for person in people_cursor:
@@ -75,9 +92,10 @@ async def read_people(request: Request):
 
 @app.post("/people/")
 async def add_person(person: PersonModel, request: Request):
-    user = get_username_from_request(request)
-    if not user:
-        raise HTTPException(status_code=401, detail="Unauthorized: user not identified")
+    user, error = get_username_from_request(request)
+    if error:
+        raise HTTPException(status_code=503, detail=f"Service unavailable: {error}")
+    
     # Augment the document with the active session user
     doc = {**person.dict(), "username": user}
     result = await db.people.insert_one(doc)

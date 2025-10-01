@@ -77,10 +77,20 @@ def index():
             resp = requests.get(API_URL, timeout=3, headers=headers)
             resp.raise_for_status()
             people = resp.json()
-        except requests.RequestException:
-            error_message = error_message or "API unavailable. Please try again later."
+        except requests.exceptions.HTTPError as e:
+            # Capture API error messages (like Redis unavailable)
+            if e.response.status_code == 503:
+                try:
+                    api_error = e.response.json().get('detail', 'Service unavailable')
+                    error_message = f"API Service Error: {api_error}"
+                except:
+                    error_message = f"API Service Error: {e.response.text or 'Service unavailable'}"
+            else:
+                error_message = f"API Error {e.response.status_code}: {e.response.text or 'Unknown error'}"
+        except requests.exceptions.RequestException as e:
+            error_message = f"API Connection Error: {str(e)}"
         except ValueError:
-            error_message = error_message or "Received invalid data from API."
+            error_message = "Received invalid data from API."
 
     secret_active = SECRET_VALUE is not None
     redis_status = check_redis_status()
@@ -131,7 +141,23 @@ def add_person():
         sess_cookie = request.cookies.get('session')
         if sess_cookie:
             headers["X-Session"] = sess_cookie
-        requests.post(API_URL, json={"name": name}, timeout=3, headers=headers)
+        resp = requests.post(API_URL, json={"name": name}, timeout=3, headers=headers)
+        resp.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        # Capture API error messages (like Redis unavailable)
+        if e.response.status_code == 503:
+            try:
+                api_error = e.response.json().get('detail', 'Service unavailable')
+                message = f"API Service Error: {api_error}"
+            except:
+                message = f"API Service Error: {e.response.text or 'Service unavailable'}"
+        else:
+            message = f"API Error {e.response.status_code}: {e.response.text or 'Unknown error'}"
+        message = quote_plus(message)
+        return redirect(f"/?error={message}")
+    except requests.exceptions.RequestException as e:
+        message = quote_plus(f"API Connection Error: {str(e)}")
+        return redirect(f"/?error={message}")
     except Exception as e:
         message = quote_plus(str(e) if str(e) else "Failed to add person. API unavailable.")
         return redirect(f"/?error={message}")

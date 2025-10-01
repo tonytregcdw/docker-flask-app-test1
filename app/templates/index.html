@@ -20,7 +20,14 @@
     {% endif %}
   </div>
   {% if error_message %}
-    <div class="alert">{{ error_message }}</div>
+    <div class="alert{% if 'API Service Error' in error_message or 'Redis not available' in error_message %} alert-error{% endif %}">
+      {% if 'API Service Error' in error_message %}
+        <strong>⚠️ API Service Issue:</strong><br>
+      {% elif 'Redis not available' in error_message %}
+        <strong>🔴 Redis Connection Issue:</strong><br>
+      {% endif %}
+      {{ error_message }}
+    </div>
   {% endif %}
   {% if username %}
     <form method="post" action="/add" class="form">
