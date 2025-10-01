@@ -1,12 +1,18 @@
+import os
+import time
+import logging
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 from motor.motor_asyncio import AsyncIOMotorClient
 from dotenv import load_dotenv
-import os
 import redis
 import pickle
 from itsdangerous import Signer, BadSignature
 from typing import Optional
+
+# Setup logging for better container log handling
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logger = logging.getLogger("api")
 
 load_dotenv()
 MONGODB_URL = os.environ.get('MONGODB_URL', "mongodb://localhost:27017")
@@ -20,28 +26,38 @@ db = client[DB_NAME]
 
 app = FastAPI()
 
-# Optional Redis client to read Flask session data
 redis_client = None
 
 @app.on_event("startup")
 async def startup_event():
-    print("=" * 50)
-    print("API STARTUP: Redis Connection Debug")
-    print("=" * 50)
-    print(f"API Redis config: REDIS_HOST={REDIS_HOST}, REDIS_PORT={REDIS_PORT}")
-    print(f"API Environment: FLASK_SECRET={'SET' if FLASK_SECRET else 'NOT SET'}")
-    print(f"API Environment: MONGODB_URL={MONGODB_URL}")
-    print(f"API Environment: DB_NAME={DB_NAME}")
-    
     global redis_client
-    try:
-        redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, socket_connect_timeout=1, socket_timeout=1)
-        redis_client.ping()
-        print("✅ API: Redis connection successful")
-    except Exception as e:
-        print(f"❌ API: Redis connection failed - {e}")
+    logger.info("=" * 50)
+    logger.info("API STARTUP: Redis Connection Debug")
+    logger.info("=" * 50)
+    logger.info(f"API Redis config: REDIS_HOST={REDIS_HOST}, REDIS_PORT={REDIS_PORT}")
+    logger.info(f"API Environment: FLASK_SECRET={'SET' if FLASK_SECRET else 'NOT SET'}")
+    logger.info(f"API Environment: MONGODB_URL={MONGODB_URL}")
+    logger.info(f"API Environment: DB_NAME={DB_NAME}")
+
+    for attempt in range(5):
+        try:
+            rc = redis.Redis(
+                host=REDIS_HOST, 
+                port=REDIS_PORT, 
+                socket_connect_timeout=2, 
+                socket_timeout=2
+            )
+            rc.ping()
+            logger.info("✅ API: Redis connection successful")
+            redis_client = rc
+            break
+        except Exception as e:
+            logger.error(f"❌ API: Redis connection failed (attempt {attempt+1}/5) - {e}")
+            time.sleep(2)
+    else:
+        logger.error("❌ API: Redis connection could not be established after retries")
         redis_client = None
-    print("=" * 50)
+    logger.info("=" * 50)
 
 @app.get("/health")
 async def health_check():
@@ -56,16 +72,11 @@ async def health_check():
 signer = None
 if FLASK_SECRET:
     try:
-        # Flask default cookie session salt is 'cookie-session'
-        signer = Signer(FLASK_SECRET, salt='cookie-session')
+        signer = Signer(FLASK_SECRET, salt="cookie-session")
     except Exception:
         signer = None
 
 def get_username_from_request(request: Request) -> tuple[Optional[str], Optional[str]]:
-    """
-    Resolve username from forwarded signed session cookie.
-    Returns (username, error_message) tuple.
-    """
     cookie_val = request.headers.get('X-Session') or request.cookies.get('session')
     if not cookie_val:
         return None, "No session cookie provided"
@@ -81,7 +92,6 @@ def get_username_from_request(request: Request) -> tuple[Optional[str], Optional
     except (BadSignature, Exception):
         return None, "Invalid session cookie signature"
     
-    # Flask-Session Redis key pattern
     redis_key = f"session:{unsigned}"
     try:
         raw = redis_client.get(redis_key)
@@ -95,17 +105,16 @@ def get_username_from_request(request: Request) -> tuple[Optional[str], Optional
     except Exception as e:
         return None, f"Redis error: {str(e)}"
 
-# Pydantic model for "Person"
 class PersonModel(BaseModel):
     name: str
 
 @app.get("/people/")
 async def read_people(request: Request):
-    print(f"🔍 GET /people/ - Headers: {dict(request.headers)}")
+    logger.info(f"🔍 GET /people/ - Headers: {dict(request.headers)}")
     user, error = get_username_from_request(request)
-    print(f"🔍 GET /people/ - User: {user}, Error: {error}")
+    logger.info(f"🔍 GET /people/ - User: {user}, Error: {error}")
     if error:
-        print(f"❌ GET /people/ - Returning 503: {error}")
+        logger.error(f"❌ GET /people/ - Returning 503: {error}")
         raise HTTPException(status_code=503, detail=f"Service unavailable: {error}")
     
     people_cursor = db.people.find({})
@@ -116,26 +125,23 @@ async def read_people(request: Request):
             "name": person.get("name", ""),
             "username": person.get("username", "")
         })
-    print(f"✅ GET /people/ - Returning {len(people)} people")
+    logger.info(f"✅ GET /people/ - Returning {len(people)} people")
     return people
 
 @app.post("/people/")
 async def add_person(person: PersonModel, request: Request):
-    print(f"🔍 POST /people/ - Headers: {dict(request.headers)}")
+    logger.info(f"🔍 POST /people/ - Headers: {dict(request.headers)}")
     user, error = get_username_from_request(request)
-    print(f"🔍 POST /people/ - User: {user}, Error: {error}")
+    logger.info(f"🔍 POST /people/ - User: {user}, Error: {error}")
     if error:
-        print(f"❌ POST /people/ - Returning 503: {error}")
+        logger.error(f"❌ POST /people/ - Returning 503: {error}")
         raise HTTPException(status_code=503, detail=f"Service unavailable: {error}")
-    
-    # Augment the document with the active session user
+
     doc = {**person.dict(), "username": user}
     result = await db.people.insert_one(doc)
-    print(f"✅ POST /people/ - Created person for user: {user}")
+    logger.info(f"✅ POST /people/ - Created person for user: {user}")
     return {
         "id": str(result.inserted_id),
         "name": person.name,
         "username": user
     }
-
-    
