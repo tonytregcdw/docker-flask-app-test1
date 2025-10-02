@@ -49,7 +49,8 @@ jobs:
         with:
           registryUrl: ghcr.io
           registryUsername: ${{ github.actor }}
-          registryPassword: ${{ secrets.GITHUB_TOKEN }}
+          # registryPassword: ${{ secrets.GITHUB_TOKEN }}
+          registryPassword: ${{ secrets.GH_PAT }}
           containerAppEnvironment: calab-cae-uks-lab01-test-01
           containerAppName: calab-ca-uks-lab01-web-test
           resourceGroup: calab-rg-uks-test-appservices-01
@@ -68,7 +69,8 @@ jobs:
         with:
           registryUrl: ghcr.io
           registryUsername: ${{ github.actor }}
-          registryPassword: ${{ secrets.GITHUB_TOKEN }}
+          # registryPassword: ${{ secrets.GITHUB_TOKEN }}
+          registryPassword: ${{ secrets.GH_PAT }}
           containerAppEnvironment: calab-cae-uks-lab01-test-01
           containerAppName: calab-ca-uks-lab01-api-test
           resourceGroup: calab-rg-uks-test-appservices-01
