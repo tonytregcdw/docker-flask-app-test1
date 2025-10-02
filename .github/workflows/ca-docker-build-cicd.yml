@@ -55,7 +55,8 @@ jobs:
           resourceGroup: calab-rg-uks-test-appservices-01
           imageToDeploy: ghcr.io/tonytregcdw/docker-ca-lab-web:${{ github.sha }}
           environmentVariables: |
-            SETTING1=value1 SETTING2=value2 MYSECRET=secretref:my-secret-name
+            SETTING1=value1 SETTING2=value2 
+            # MYSECRET=secretref:my-secret-name
 
       - name: Build and push container image to registry - api
         run: |
@@ -75,4 +76,5 @@ jobs:
           resourceGroup: calab-rg-uks-test-appservices-01
           imageToDeploy: ghcr.io/tonytregcdw/docker-ca-lab-api:${{ github.sha }}
           environmentVariables: |
-            SETTING1=value1 SETTING2=value2 MYSECRET=secretref:my-secret-name
+            SETTING1=value1 SETTING2=value2 
+            # MYSECRET=secretref:my-secret-name
