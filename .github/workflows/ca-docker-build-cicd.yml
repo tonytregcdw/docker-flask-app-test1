@@ -54,7 +54,8 @@ jobs:
           containerAppName: calab-ca-uks-lab01-web-test
           resourceGroup: calab-rg-uks-test-appservices-01
           imageToDeploy: ghcr.io/tonytregcdw/docker-ca-lab-web:${{ github.sha }}
-          environmentVariables: '[{"name":"REDIS_HOST","value":"calab-ca-uks-lab01-redis-test"},{"name":"REDIS_PORT","value":"6379"}]'
+          environmentVariables: |
+            SETTING1=value1 SETTING2=value2 MYSECRET=secretref:my-secret-name
 
       - name: Build and push container image to registry - api
         run: |
@@ -73,4 +74,5 @@ jobs:
           containerAppName: calab-ca-uks-lab01-api-test
           resourceGroup: calab-rg-uks-test-appservices-01
           imageToDeploy: ghcr.io/tonytregcdw/docker-ca-lab-api:${{ github.sha }}
-          environmentVariables: '[{"name":"REDIS_HOST","value":"calab-ca-uks-lab01-redis-test"},{"name":"REDIS_PORT","value":"6379"}]'
+          environmentVariables: |
+            SETTING1=value1 SETTING2=value2 MYSECRET=secretref:my-secret-name
