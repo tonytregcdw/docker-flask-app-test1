@@ -6,12 +6,10 @@ from pydantic import BaseModel
 from motor.motor_asyncio import AsyncIOMotorClient
 from dotenv import load_dotenv
 import redis
-import pickle
-from itsdangerous import Signer, URLSafeTimedSerializer, BadSignature
-
+from itsdangerous import URLSafeTimedSerializer, BadSignature
 from typing import Optional
 
-# Setup logging for better container log handling
+# Setup logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("api")
 
@@ -26,7 +24,6 @@ client = AsyncIOMotorClient(MONGODB_URL)
 db = client[DB_NAME]
 
 app = FastAPI()
-
 redis_client = None
 
 @app.on_event("startup")
@@ -39,7 +36,6 @@ async def startup_event():
     logger.info(f"API Environment: FLASK_SECRET={'SET' if FLASK_SECRET else 'NOT SET'}")
     logger.info(f"API Environment: MONGODB_URL={MONGODB_URL}")
     logger.info(f"API Environment: DB_NAME={DB_NAME}")
-
     for attempt in range(5):
         try:
             rc = redis.Redis(
@@ -70,36 +66,26 @@ async def health_check():
         "flask_secret": "SET" if FLASK_SECRET else "NOT SET"
     }
 
-signer = None
-
-
-if FLASK_SECRET:
-    signer = URLSafeTimedSerializer(
-        FLASK_SECRET,
-        salt='cookie-session'
-    )
-else:
-    signer = None
+# Use matching secret and salt for itsdangerous
+SIGNER = URLSafeTimedSerializer(
+    FLASK_SECRET,
+    salt='cookie-session'
+)
 
 def get_username_from_request(request: Request) -> tuple[Optional[str], Optional[str]]:
-    cookie_val = request.headers.get('X-Session') or request.cookies.get('session')
+    cookie_val = request.headers.get('X-Session')
     if not cookie_val:
-        return None, "No session cookie provided"
-    if not signer:
-        return None, "Session signing not configured (FLASK_SECRET missing)"
-    if not redis_client:
-        return None, "Redis not available - cannot validate session"
+        return None, "No session token provided"
     try:
-        session_data = signer.loads(cookie_val)
+        session_data = SIGNER.loads(cookie_val)
         username = session_data.get('username')
         if not username:
-            return None, "No username in session data"
+            return None, "No username in session token"
         return username, None
     except BadSignature:
-        return None, "Invalid session cookie signature"
+        return None, "Invalid session token signature"
     except Exception as e:
-        return None, f"Cookie decode error: {str(e)}"
-
+        return None, f"Session token decode error: {str(e)}"
 
 class PersonModel(BaseModel):
     name: str
@@ -112,7 +98,6 @@ async def read_people(request: Request):
     if error:
         logger.error(f"❌ GET /people/ - Returning 503: {error}")
         raise HTTPException(status_code=503, detail=f"Service unavailable: {error}")
-    
     people_cursor = db.people.find({})
     people = []
     async for person in people_cursor:
@@ -127,17 +112,4 @@ async def read_people(request: Request):
 @app.post("/people/")
 async def add_person(person: PersonModel, request: Request):
     logger.info(f"🔍 POST /people/ - Headers: {dict(request.headers)}")
-    user, error = get_username_from_request(request)
-    logger.info(f"🔍 POST /people/ - User: {user}, Error: {error}")
-    if error:
-        logger.error(f"❌ POST /people/ - Returning 503: {error}")
-        raise HTTPException(status_code=503, detail=f"Service unavailable: {error}")
-
-    doc = {**person.dict(), "username": user}
-    result = await db.people.insert_one(doc)
-    logger.info(f"✅ POST /people/ - Created person for user: {user}")
-    return {
-        "id": str(result.inserted_id),
-        "name": person.name,
-        "username": user
-    }
+    user, error
