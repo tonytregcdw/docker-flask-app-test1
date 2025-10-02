@@ -90,24 +90,35 @@ def get_username_from_request(request: Request) -> tuple[Optional[str], Optional
 class PersonModel(BaseModel):
     name: str
 
+@app.get("/people/")
+async def read_people(request: Request):
+    logger.info(f"🔍 GET /people/ - Headers: {dict(request.headers)}")
+    user, error = get_username_from_request(request)
+    logger.info(f"🔍 GET /people/ - User: {user}, Error: {error}")
+    if error:
+        logger.error(f"❌ GET /people/ - Returning 503: {error}")
+        raise HTTPException(status_code=503, detail=f"Service unavailable: {error}")
+    people_cursor = db.people.find({})
+    people = []
+    async for person in people_cursor:
+        people.append({
+            "id": str(person.get("_id")),
+            "name": person.get("name", ""),
+            "username": person.get("username", "")
+        })
+    logger.info(f"✅ GET /people/ - Returning {len(people)} people")
+    return people
+
 @app.post("/people/")
 async def add_person(person: PersonModel, request: Request):
-    logger.info(f"🔍 POST /people/ - Headers: {dict(request.headers)}")
     user, error = get_username_from_request(request)
-    logger.info(f"🔍 POST /people/ - User: {user}, Error: {error}")
     if error:
-        logger.error(f"❌ POST /people/ - Returning 503: {error}")
         raise HTTPException(status_code=503, detail=f"Service unavailable: {error}")
+    # Now 'user' is always defined below
     doc = {**person.dict(), "username": user}
     result = await db.people.insert_one(doc)
-    logger.info(f"✅ POST /people/ - Created person for user: {user}")
     return {
         "id": str(result.inserted_id),
         "name": person.name,
         "username": user
     }
-
-@app.post("/people/")
-async def add_person(person: PersonModel, request: Request):
-    logger.info(f"🔍 POST /people/ - Headers: {dict(request.headers)}")
-    user, error
