@@ -7,7 +7,8 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from dotenv import load_dotenv
 import redis
 import pickle
-from itsdangerous import Signer, BadSignature
+from itsdangerous import Signer, URLSafeTimedSerializer, BadSignature
+
 from typing import Optional
 
 # Setup logging for better container log handling
@@ -70,40 +71,35 @@ async def health_check():
     }
 
 signer = None
+
+
 if FLASK_SECRET:
-    try:
-        signer = Signer(FLASK_SECRET, salt="cookie-session")
-    except Exception:
-        signer = None
+    signer = URLSafeTimedSerializer(
+        FLASK_SECRET,
+        salt='cookie-session'
+    )
+else:
+    signer = None
 
 def get_username_from_request(request: Request) -> tuple[Optional[str], Optional[str]]:
     cookie_val = request.headers.get('X-Session') or request.cookies.get('session')
     if not cookie_val:
         return None, "No session cookie provided"
-    
     if not signer:
         return None, "Session signing not configured (FLASK_SECRET missing)"
-    
     if not redis_client:
         return None, "Redis not available - cannot validate session"
-    
     try:
-        unsigned = signer.unsign(cookie_val).decode('utf-8')
-    except (BadSignature, Exception):
-        return None, "Invalid session cookie signature"
-    
-    redis_key = f"session:{unsigned}"
-    try:
-        raw = redis_client.get(redis_key)
-        if not raw:
-            return None, "Session expired or not found"
-        data = pickle.loads(raw)
-        username = data.get('username')
+        session_data = signer.loads(cookie_val)
+        username = session_data.get('username')
         if not username:
             return None, "No username in session data"
         return username, None
+    except BadSignature:
+        return None, "Invalid session cookie signature"
     except Exception as e:
-        return None, f"Redis error: {str(e)}"
+        return None, f"Cookie decode error: {str(e)}"
+
 
 class PersonModel(BaseModel):
     name: str
