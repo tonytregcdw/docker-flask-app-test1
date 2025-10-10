@@ -23,7 +23,7 @@ Session(app)
 
 FLASK_SECRET = os.environ.get('FLASK_SECRET', 'CHANGE_ME')
 API_URL = os.environ.get('API_URL')
-REPLICA_NAME = os.environ.get('ACONTAINER_APP_REPLICA_NAME')
+REPLICA_NAME = os.environ.get('CONTAINER_APP_REPLICA_NAME')
 
 # Shared itsdangerous serializer for tokens
 SIGNER = URLSafeTimedSerializer(FLASK_SECRET, salt="cookie-session")
