@@ -23,6 +23,7 @@ Session(app)
 
 FLASK_SECRET = os.environ.get('FLASK_SECRET', 'CHANGE_ME')
 API_URL = os.environ.get('API_URL')
+REPLICA_NAME = os.environ.get('ACONTAINER_APP_REPLICA_NAME')
 
 # Shared itsdangerous serializer for tokens
 SIGNER = URLSafeTimedSerializer(FLASK_SECRET, salt="cookie-session")
@@ -58,7 +59,7 @@ def index():
             error_message = f"API Connection Error: {str(e)}"
         except ValueError:
             error_message = "Received invalid data from API."
-    return render_template("index.html", people=people, error_message=error_message, username=username)
+    return render_template("index.html", people=people, error_message=error_message, username=username, replica=REPLICA_NAME)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

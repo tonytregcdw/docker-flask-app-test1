@@ -24,6 +24,11 @@
       {{ error_message }}
     </div>
   {% endif %}
+  {% replica %}
+    <div class="alert">
+        <strong>Replica Name: {{ replica }}</strong><br>
+    </div>
+  {% endif %}
   {% if username %}
     <form method="post" action="/add" class="form">
       <input name="name" placeholder="Name" required class="input">
