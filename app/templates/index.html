@@ -44,6 +44,7 @@
           <th class="th id">ID</th>
           <th class="th">Name</th>
           <th class="th">Username</th>
+          <th class="th">replica_session</th>
         </tr>
       </thead>
       <tbody>
@@ -53,6 +54,7 @@
               <td class="td id muteds">{{ person['id'] }}</td>
               <td class="td">{{ person['name'] }}</td>
               <td class="td">{{ person['username'] }}</td>
+              <td class="td">{{ person['replica_session'] }}</td>
             </tr>
           {% endfor %}
         {% elif username %}

@@ -19,6 +19,7 @@ DB_NAME = os.environ.get('DB_NAME', "testdb")
 REDIS_HOST = os.environ.get('REDIS_HOST', 'redis')
 REDIS_PORT = int(os.environ.get('REDIS_PORT', '6379'))
 FLASK_SECRET = os.environ.get('FLASK_SECRET', 'CHANGE_ME')
+REPLICA_NAME = os.environ.get('CONTAINER_APP_REPLICA_NAME')
 
 client = AsyncIOMotorClient(MONGODB_URL)
 db = client[DB_NAME]
@@ -104,7 +105,8 @@ async def read_people(request: Request):
         people.append({
             "id": str(person.get("_id")),
             "name": person.get("name", ""),
-            "username": person.get("username", "")
+            "username": person.get("username", ""),
+            "replica_session":  person.get("replica_session", "")
         })
     logger.info(f"✅ GET /people/ - Returning {len(people)} people")
     return people
@@ -120,5 +122,6 @@ async def add_person(person: PersonModel, request: Request):
     return {
         "id": str(result.inserted_id),
         "name": person.name,
-        "username": user
+        "username": user,
+        "replica_session": REPLICA_NAME
     }
