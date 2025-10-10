@@ -117,7 +117,7 @@ async def add_person(person: PersonModel, request: Request):
     if error:
         raise HTTPException(status_code=503, detail=f"Service unavailable: {error}")
     # Now 'user' is always defined below
-    doc = {**person.dict(), "username": user}
+    doc = {**person.dict(), "username": user, "replica_session": REPLICA_NAME}
     result = await db.people.insert_one(doc)
     return {
         "id": str(result.inserted_id),
